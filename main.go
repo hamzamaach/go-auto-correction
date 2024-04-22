@@ -7,16 +7,15 @@ import (
 	"strings"
 )
 
+// Add a space after each punctuation mark (.,!?:;)
 func addSpaceAfterPunctuation(str string) string {
 	var modifiedContent strings.Builder
 	length := len(str)
 
 	for i := 0; i < length; i++ {
-		char := str[i]
-		modifiedContent.WriteByte(char)
+		modifiedContent.WriteByte(str[i])
 
-		// Check if the character is one of the specified punctuation marks
-		if char == '.' || char == ',' || char == '!' || char == '?' || char == ':' || char == ';' {
+		if str[i] == '.' || str[i] == ',' || str[i] == '!' || str[i] == '?' || str[i] == ':' || str[i] == ';' {
 			// Check if the next character is not a space and exists
 			if i < length-1 && str[i+1] != ' ' {
 				modifiedContent.WriteByte(' ')
@@ -27,13 +26,14 @@ func addSpaceAfterPunctuation(str string) string {
 	return modifiedContent.String()
 }
 
+// Converts the input string into a slice of strings (words)
 func stringToSlice(str string) []string {
 	// Unification of form of instructions
 	var modifiedContent string
 	modifiedContent = strings.ReplaceAll(str, "(up)", "(up,1)")
 	modifiedContent = strings.ReplaceAll(modifiedContent, "(low)", "(low,1)")
 	modifiedContent = strings.ReplaceAll(modifiedContent, "(cap)", "(cap,1)")
-	sliceContent := strings.Split(modifiedContent, " ")
+	sliceContent := strings.Fields(modifiedContent)
 
 	// remove the space in <<(low, 3)>> to became <<(low,3)>>
 	for i := 0; i < len(sliceContent); i++ {
@@ -61,9 +61,11 @@ func capitalize(s string) string {
 	if len(s) == 0 {
 		return s
 	}
+	// capitalize first character and concatenates with the rest of the string
 	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
+// Corrects the use of indefinite articles ("a" and "A") to "an" or "An" when followed by a vowel sound
 func FixIndefiniteArticles(str []string) []string {
 	updatedString := []string{}
 	for i, v := range str {
@@ -87,10 +89,12 @@ func FixIndefiniteArticles(str []string) []string {
 	return updatedString
 }
 
+// Processes certain actions specified within parentheses in the input slice (such as converting to hex, bin, up, low, or cap) 
 func ProcessContentActions(sliceContent []string) []string {
 	for i := 0; i < len(sliceContent); i++ {
 		if strings.Contains(sliceContent[i], "(") && strings.Contains(sliceContent[i], ")") {
 			if strings.Contains(sliceContent[i], ",") {
+				// remove Parentheses
 				withoutParentheses := sliceContent[i][1 : len(sliceContent[i])-1]
 				options := strings.Split(withoutParentheses, ",")
 				if len(options) == 2 {
@@ -114,6 +118,7 @@ func ProcessContentActions(sliceContent []string) []string {
 					i--
 				}
 			} else {
+				// remove Parentheses
 				action := sliceContent[i][1 : len(sliceContent[i])-1]
 				switch action {
 				case "hex":
@@ -139,6 +144,7 @@ func ProcessContentActions(sliceContent []string) []string {
 	return sliceContent
 }
 
+// remove spaces from all the elems of a slice of strings given
 func removeSpaces(sliceString []string) []string {
 	var updatedStrings []string
 	// Remove all spaces from the string
@@ -150,7 +156,8 @@ func removeSpaces(sliceString []string) []string {
 	return updatedStrings
 }
 
-func handleSpaces(sliceString []string) []string {
+// Adjusts white spaces and quote marks in the given slice of strings
+func adjustWhitespaceAndQuotes(sliceString []string) []string {
 	openQuote := false
 	for i := 0; i < len(sliceString)-1; i++ {
 		if sliceString[i+1][0] == '.' ||
@@ -175,6 +182,8 @@ func handleSpaces(sliceString []string) []string {
 	}
 	return sliceString
 }
+
+// Adds spaces after punctuation marks (.,!?:;) and handles repeated punctuation correctly
 func addSpacesAfterSymbols(str string) string {
 	result := ""
 	i := 0
@@ -188,16 +197,26 @@ func addSpacesAfterSymbols(str string) string {
 			str[i] == ';' {
 			result += string(str[i])
 
+			// Initialize a variable to handle repeated punctuation
 			start := i + 1
 			for start < len(str) && str[start] == str[i] {
 				result += string(str[start])
 				start++
 			}
+			// Update the index to skip past repeated punctuation
 			i = start
 
-			// if i < len(str) && str[i] != ' ' {
-			// 	result += " "
-			// }
+			// Add a space after the punctuation
+			if i < len(str)-1 && str[i] != ' ' {
+				if str[i+1] != '.' &&
+					str[i+1] != ',' &&
+					str[i+1] != '!' &&
+					str[i+1] != '?' &&
+					str[i+1] != ':' &&
+					str[i+1] != ';' {
+					result += " "
+				}
+			}
 		} else {
 			result += string(str[i])
 			i++
@@ -207,25 +226,7 @@ func addSpacesAfterSymbols(str string) string {
 	return result
 }
 
-// func addSpacesAfeterSymbols(str string) string {
-// 	result := ""
-// 	for i, char := range str {
-// 		if (char == '.' ||
-// 			char == ',' ||
-// 			char == '!' ||
-// 			char == '?' ||
-// 			char == ':' ||
-// 			char == ';') && i != len(str)-1 {
-// 			if str[i+1] != ' ' {
-// 				result += string(char)
-// 			}
-// 		} else {
-// 			result += string(char)
-// 		}
-// 	}
-// 	return result
-// }
-
+// Saves the modified string content to a specified file
 func SaveFile(fileName string, str string) {
 	file, _ := os.Create(fileName)
 	defer file.Close()
@@ -243,13 +244,11 @@ func main() {
 		sliceContent = ProcessContentActions(sliceContent)
 		sliceContent = FixIndefiniteArticles(sliceContent)
 		sliceContent = removeSpaces(sliceContent)
-		updatedString := handleSpaces(sliceContent)
+		updatedString := adjustWhitespaceAndQuotes(sliceContent)
 		for _, v := range updatedString {
 			result += v
 		}
 		result = addSpacesAfterSymbols(result)
-		// fmt.Println(result)
 		SaveFile("result.txt", result)
-
 	}
 }
