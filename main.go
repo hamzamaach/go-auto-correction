@@ -22,7 +22,6 @@ func addSpaceAfterPunctuation(str string) string {
 			}
 		}
 	}
-
 	return modifiedContent.String()
 }
 
@@ -30,7 +29,9 @@ func addSpaceAfterPunctuation(str string) string {
 func stringToSlice(str string) []string {
 	// Unification of form of instructions
 	var modifiedContent string
-	modifiedContent = strings.ReplaceAll(str, "(up)", "(up,1)")
+	modifiedContent = strings.ReplaceAll(str, "\n", "{-n-}")
+	modifiedContent = strings.ReplaceAll(modifiedContent, ")", ") ")
+	modifiedContent = strings.ReplaceAll(modifiedContent, "(up)", "(up,1)")
 	modifiedContent = strings.ReplaceAll(modifiedContent, "(low)", "(low,1)")
 	modifiedContent = strings.ReplaceAll(modifiedContent, "(cap)", "(cap,1)")
 	sliceContent := strings.Fields(modifiedContent)
@@ -44,6 +45,27 @@ func stringToSlice(str string) []string {
 	}
 
 	return sliceContent
+}
+
+func extractInsideParentheses(input string) string {
+	inParentheses := false
+	currentContent := ""
+
+	for _, char := range input {
+		if char == '(' {
+			inParentheses = true
+			continue
+		}
+		if char == ')' {
+			if inParentheses {
+				break
+			}
+		}
+		if inParentheses {
+			currentContent += string(char)
+		}
+	}
+	return currentContent
 }
 
 // Convert a string to uppercase
@@ -89,13 +111,22 @@ func FixIndefiniteArticles(str []string) []string {
 	return updatedString
 }
 
-// Processes certain actions specified within parentheses in the input slice (such as converting to hex, bin, up, low, or cap) 
+// Processes certain actions specified within parentheses in the input slice (such as converting to hex, bin, up, low, or cap)
 func ProcessContentActions(sliceContent []string) []string {
 	for i := 0; i < len(sliceContent); i++ {
-		if strings.Contains(sliceContent[i], "(") && strings.Contains(sliceContent[i], ")") {
+		if strings.Contains(sliceContent[i], "(") &&
+			strings.Contains(sliceContent[i], ")") &&
+			(strings.Contains(sliceContent[i], "hex") ||
+				strings.Contains(sliceContent[i], "bin") ||
+				strings.Contains(sliceContent[i], "up") ||
+				strings.Contains(sliceContent[i], "low") ||
+				strings.Contains(sliceContent[i], "bin") ||
+				strings.Contains(sliceContent[i], "cap")) {
 			if strings.Contains(sliceContent[i], ",") {
+
 				// remove Parentheses
-				withoutParentheses := sliceContent[i][1 : len(sliceContent[i])-1]
+				// withoutParentheses := sliceContent[i][1 : len(sliceContent[i])-1]
+				withoutParentheses := extractInsideParentheses(sliceContent[i])
 				options := strings.Split(withoutParentheses, ",")
 				if len(options) == 2 {
 					action := options[0]
@@ -119,7 +150,8 @@ func ProcessContentActions(sliceContent []string) []string {
 				}
 			} else {
 				// remove Parentheses
-				action := sliceContent[i][1 : len(sliceContent[i])-1]
+				// action := sliceContent[i][1 : len(sliceContent[i])-1]
+				action := extractInsideParentheses(sliceContent[i])
 				switch action {
 				case "hex":
 					// Convert hex string to int64
@@ -176,7 +208,7 @@ func adjustWhitespaceAndQuotes(sliceString []string) []string {
 		} else {
 			sliceString[i] += " "
 		}
-		if sliceString[i][0] == '\'' && !openQuote {
+		if sliceString[i][0] == '\'' && openQuote {
 			sliceString[i] = strings.Trim(sliceString[i], " ")
 		}
 	}
@@ -249,6 +281,7 @@ func main() {
 			result += v
 		}
 		result = addSpacesAfterSymbols(result)
+		result = strings.ReplaceAll(result, "{-n-}", "\n")
 		SaveFile("result.txt", result)
 	}
 }
