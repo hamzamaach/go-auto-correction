@@ -84,8 +84,14 @@ func capitalize(s string) string {
 		return s
 	}
 	// capitalize first character and concatenates with the rest of the string
+	s = toLowerCase(s)
 	return strings.ToUpper(string(s[0])) + s[1:]
 }
+
+/*
+v := "aAeE"
+strings.Countains(v, string(str[0]))
+*/
 
 // Corrects the use of indefinite articles ("a" and "A") to "an" or "An" when followed by a vowel sound
 func FixIndefiniteArticles(str []string) []string {
@@ -208,7 +214,7 @@ func adjustWhitespaceAndQuotes(sliceString []string) []string {
 		} else {
 			sliceString[i] += " "
 		}
-		if sliceString[i][0] == '\'' && openQuote {
+		if sliceString[i][0] == '\'' && !openQuote {
 			sliceString[i] = strings.Trim(sliceString[i], " ")
 		}
 	}
