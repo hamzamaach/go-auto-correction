@@ -117,7 +117,16 @@ func ProcessContentActions(str string) string {
 		for i < len(words) {
 			word := words[i]
 			// Check if word contains an action
-			if strings.Contains(word, "(") && strings.Contains(word, ")") && strings.ContainsAny(word, "hex,bin,up,low,cap") {
+			if strings.Contains(word, "(") && strings.Contains(word, ")") && (strings.Contains(word, "hex") ||
+				strings.Contains(word, "bin") ||
+				strings.Contains(word, "up") ||
+				strings.Contains(word, "low") ||
+				strings.Contains(word, "cap")) {
+				// If word contains a "," and is one of the actions "bin" or "hex" do nothing
+				if strings.Contains(word, ",") && (strings.Contains(word, "bin") || strings.Contains(word, "hex")) {
+					i++
+					continue
+				}
 				if strings.Contains(word, ",") {
 					// Handle case with multiple actions
 					withoutParentheses := ExtractInsideParentheses(word)
@@ -134,7 +143,7 @@ func ProcessContentActions(str string) string {
 						continue
 					}
 					// Apply the action to the specified number of words
-					for j := i - 1; j >= i-howMany; j-- {
+					for j := i - 1; j >= i-howMany && j >= 0; j-- {
 						if !isOnlycharacters(words[j]) {
 							howMany++
 							continue
@@ -164,9 +173,11 @@ func ProcessContentActions(str string) string {
 						i++
 						continue
 					}
-					decimalStr, err := convertToDecimal(words[i-1], base)
-					if err == nil {
-						words[i-1] = decimalStr
+					if i-1 >= 0 {
+						decimalStr, err := convertToDecimal(words[i-1], base)
+						if err == nil {
+							words[i-1] = decimalStr
+						}
 					}
 					words = append(words[:i], words[i+1:]...)
 					i--
@@ -222,7 +233,7 @@ func AdjustWhitespacesAfterSymbols(str string) string {
 		}
 		// add space after single quote if there's a space before it
 
-		if str[i] == '\'' {
+		if str[i] == '\'' || str[i] == '"' {
 			if i > 0 && str[i-1] == ' ' {
 				if i < length-1 && str[i+1] != ' ' {
 					modifiedContent.WriteByte(' ')
@@ -233,29 +244,45 @@ func AdjustWhitespacesAfterSymbols(str string) string {
 	return modifiedContent.String()
 }
 
-func AdjustSingleQuotes(str string) string {
+func AdjustQuotes(str string) string {
 	lines := strings.Split(str, "\n")
 	modifiedLines := []string{}
 
 	for _, line := range lines {
 		words := strings.Fields(line)
-		openQuote := false
+		openSingleQuote := false
+		openDoubleQuote := false
 
 		for i := 0; i < len(words); i++ {
 			if words[i] == "'" {
-				if openQuote {
+				if openSingleQuote {
 					if i > 0 {
 						words[i-1] += words[i]
 						words = append(words[:i], words[i+1:]...)
 						i--
 					}
-					openQuote = false
+					openSingleQuote = false
 				} else {
 					if i < len(words)-1 {
 						words[i] = words[i] + words[i+1]
 						words = append(words[:i+1], words[i+2:]...)
 					}
-					openQuote = true
+					openSingleQuote = true
+				}
+			} else if words[i] == "\"" {
+				if openDoubleQuote {
+					if i > 0 {
+						words[i-1] += words[i]
+						words = append(words[:i], words[i+1:]...)
+						i--
+					}
+					openDoubleQuote = false
+				} else {
+					if i < len(words)-1 {
+						words[i] = words[i] + words[i+1]
+						words = append(words[:i+1], words[i+2:]...)
+					}
+					openDoubleQuote = true
 				}
 			}
 		}
@@ -299,4 +326,28 @@ func isOnlycharacters(word string) bool {
 		}
 	}
 	return false
+}
+
+func AddSpaceAfterSingleQuote(str string) string {
+	var modifiedContent strings.Builder
+	length := len(str)
+
+	i := 0
+	for i < length {
+		currentChar := str[i]
+		modifiedContent.WriteByte(currentChar)
+
+		if currentChar == '\'' || currentChar == '"' {
+			if (i == 0 || str[i-1] == ' ') && i < length-1 {
+				nextChar := str[i+1]
+				if nextChar != ' ' {
+					// Add a space after the single quote
+					modifiedContent.WriteByte(' ')
+				}
+			}
+		}
+		i++
+	}
+
+	return modifiedContent.String()
 }
