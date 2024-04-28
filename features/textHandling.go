@@ -87,9 +87,12 @@ func FormatText(str string) string {
 	str = strings.ReplaceAll(str, "(up)", "(up,1)")
 	str = strings.ReplaceAll(str, "(low)", "(low,1)")
 	str = strings.ReplaceAll(str, "(cap)", "(cap,1)")
-	// add whitespace before and after each action
+
+	str = strings.ReplaceAll(str, "\"", " \" ")
+	str = strings.ReplaceAll(str, "' ", " ' ")
 	str = strings.ReplaceAll(str, ")", ") ")
 	str = strings.ReplaceAll(str, "(", " (")
+	
 	lines := strings.Split(str, "\n")
 	modifiedLines := []string{}
 	for _, line := range lines {
