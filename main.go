@@ -15,7 +15,7 @@ func main() {
 		if fileErr == nil {
 			StringContent := string(content)
 			StringContent = ft.FormatText(StringContent)
-			StringContent = ft.AddSpaceAfterSingleQuote(StringContent)
+			StringContent = ft.AddSpaceAfterQuotes(StringContent)
 			StringContent = ft.HandleIndefiniteArticles(StringContent)
 			StringContent = ft.ProcessContentActions(StringContent)
 			StringContent = ft.AdjustWhitespacesAfterSymbols(StringContent)
@@ -23,7 +23,7 @@ func main() {
 			StringContent = ft.HandleIndefiniteArticles(StringContent)
 			StringContent = ft.AdjustQuotes(StringContent)
 			StringContent = ft.AdjustWhitespacesBeforeSymbols(StringContent)
-			StringContent = ft.HandleIndefiniteArticles(StringContent)
+			// StringContent = ft.HandleIndefiniteArticles(StringContent)
 			ft.SaveFile(args[1], StringContent)
 		} else {
 			fmt.Print("Error: ", fileErr)
@@ -31,5 +31,3 @@ func main() {
 		}
 	}
 }
-
-// 'eee' 'eee ' ' eee ' ' eee' 'e e e' 'e e e ' ' e e e ' ' e e e' 

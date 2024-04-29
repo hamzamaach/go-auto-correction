@@ -15,6 +15,15 @@ func convertToDecimal(input string, base int) (string, error) {
 	return strconv.FormatInt(value, 10), nil
 }
 
+func isOnlycharacters(word string) bool {
+	for _, char := range word {
+		if strings.ContainsRune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", char) {
+			return true
+		}
+	}
+	return false
+}
+
 // Convert a string to uppercase
 func toUpperCase(s string) string {
 	return strings.ToUpper(s)
@@ -25,14 +34,33 @@ func toLowerCase(s string) string {
 	return strings.ToLower(s)
 }
 
-// Capitalize a string
+// Capitalize the first char in a string
 func capitalize(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	s = toLowerCase(s)
-	// capitalize first character and concatenates with the rest of the string
-	return strings.ToUpper(string(s[0])) + s[1:]
+	lowerS := strings.ToLower(s)
+	var result strings.Builder
+	found := false
+
+	for i, char := range lowerS {
+		if !found {
+			if unicode.IsLetter(char) || unicode.IsNumber(char) {
+				result.WriteString(strings.ToUpper(string(char)))
+				result.WriteString(lowerS[i+1:])
+				found = true
+				break
+			} else {
+				result.WriteString(string(char))
+			}
+		}
+	}
+
+	if !found {
+		return s
+	}
+
+	return result.String()
 }
 
 func ExtractInsideParentheses(input string) string {
@@ -92,7 +120,7 @@ func FormatText(str string) string {
 	str = strings.ReplaceAll(str, "' ", " ' ")
 	str = strings.ReplaceAll(str, ")", ") ")
 	str = strings.ReplaceAll(str, "(", " (")
-	
+
 	lines := strings.Split(str, "\n")
 	modifiedLines := []string{}
 	for _, line := range lines {
@@ -178,7 +206,9 @@ func ProcessContentActions(str string) string {
 					}
 					if i-1 >= 0 {
 						decimalStr, err := convertToDecimal(words[i-1], base)
-						if err == nil {
+						if err != nil {
+							fmt.Printf("Error converting: \"%s\" with action (%s)\n",words[i-1], action)
+						} else {
 							words[i-1] = decimalStr
 						}
 					}
@@ -246,7 +276,7 @@ func AdjustWhitespacesAfterSymbols(str string) string {
 	}
 	return modifiedContent.String()
 }
-
+//
 func AdjustQuotes(str string) string {
 	lines := strings.Split(str, "\n")
 	modifiedLines := []string{}
@@ -300,21 +330,19 @@ func AddSpacesAroundSymbols(input string) string {
 	var result strings.Builder
 	symbols := ".,!?;:"
 
-	// Iterate through each character in the input string
 	for i, char := range input {
 		if strings.ContainsRune(symbols, char) {
-			// Add space before the symbol if necessary
+			// Add space before the symbol if doesn't exist
 			if i > 0 && !unicode.IsSpace(rune(input[i-1])) {
 				result.WriteString(" ")
 			}
 			// Add the symbol
 			result.WriteRune(char)
-			// Add space after the symbol if necessary
+			// Add space after the symbol if doesn't exist
 			if i < len(input)-1 && !unicode.IsSpace(rune(input[i+1])) {
 				result.WriteString(" ")
 			}
 		} else {
-			// Add the character as is
 			result.WriteRune(char)
 		}
 	}
@@ -322,16 +350,7 @@ func AddSpacesAroundSymbols(input string) string {
 	return result.String()
 }
 
-func isOnlycharacters(word string) bool {
-	for _, char := range word {
-		if strings.ContainsRune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", char) {
-			return true
-		}
-	}
-	return false
-}
-
-func AddSpaceAfterSingleQuote(str string) string {
+func AddSpaceAfterQuotes(str string) string {
 	var modifiedContent strings.Builder
 	length := len(str)
 
